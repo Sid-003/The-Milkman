@@ -20,9 +20,10 @@ namespace The_Milkman
             this.CommandExecutionFailed += OnFailed;
         }
 
-        private async Task OnFailed(CommandExecutionFailedEventArgs e)
+        private Task OnFailed(CommandExecutionFailedEventArgs e)
         {
             _logger.Log(LogLevel.Warning, $"{e.Result.Command.Name} failed because: " + e.Result.Exception.ToString());
+            return Task.CompletedTask;
         }
 
         protected override ValueTask<bool> CheckMessageAsync(CachedUserMessage message)

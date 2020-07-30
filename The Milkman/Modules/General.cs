@@ -20,7 +20,6 @@ namespace The_Milkman.Modules
             await Context.Channel.SendMessageAsync("pong your mother");
         }
 
-
         private Task<bool> StartProcessAsync(string name, string args)
         {
             var tcs = new TaskCompletionSource<bool>();
@@ -61,10 +60,19 @@ namespace The_Milkman.Modules
 
 
         [Command("stickbug")]
-        public async Task Yeah([Remainder]string name = "output.mp4")
+        public async Task StickbugAsync(string outputname = "output")
+           => await MergeVideo("video", outputname);
+
+
+        [Command("souptime")]
+        public async Task SouptimeAsync(string outputname = "output")
+            => await MergeVideo("lizard", outputname);
+
+
+        private async Task MergeVideo(string video, string outputname)
         {
             var url = Context.Message.Attachments.FirstOrDefault()?.Url;
-
+            
             if (url is null)
                 throw new Exception("lmao idiot what are you doing");
 
@@ -90,25 +98,23 @@ namespace The_Milkman.Modules
             {
                 convertString,
                 "-y -i image.mp4 -c copy -bsf:v h264_mp4toannexb -f mpegts image.ts",
-                "-y -i video.mp4 -c copy -bsf:v h264_mp4toannexb -f mpegts video.ts",
+                $"-y -i {video}.mp4 -c copy -bsf:v h264_mp4toannexb -f mpegts video.ts",
                 "-y -i \"concat:image.ts|video.ts\" -c copy -bsf:a aac_adtstoasc output.mp4"
             };
 
             const string ffmpeg = "ffmpeg.exe";
             foreach (string t in args)
             {
-                //will simply get a taskcanceledexception if it didn't succed
+                //ideally you would try catch and return a proper command result, too lazy lmao
                 if (!(await StartProcessAsync(ffmpeg, t)))
                 {
                     throw new Exception("something went wrong, blame yourself");
                 }
             }
 
-            var fs = new MemoryStream(await File.ReadAllBytesAsync("output.mp4"))
-            {
-                Position = 0
-            };
-            await Context.Channel.SendMessageAsync(new LocalAttachment(fs, name));
+            var fs = new MemoryStream(await File.ReadAllBytesAsync("output.mp4"));
+
+            await Context.Channel.SendMessageAsync(new LocalAttachment(fs, outputname + ".mp4"));
         }
     }
 }

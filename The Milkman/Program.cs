@@ -11,19 +11,37 @@ using The_Milkman.Logging;
 
 namespace The_Milkman
 {
-    class Program
+    internal class Program
     {
-        
-        static async Task Main(string[] args)
+        private static async Task Main(string[] args)
             => await new Program().StartAsync();
 
 
         private async Task StartAsync()
         {
-            await ConfigureServices().GetService<Milkman>().RunAsync();
+            var provider = ConfigureServices();
+            
+            var configuration = provider.GetService<IConfigurationRoot>();
+            
+            var loggerFactory = provider.GetService<ILoggerFactory>();
+            var logger = loggerFactory.CreateLogger("The Milkman");
+            
+            var prefixProvider = new MilkmanPrefixProvider();
+            
+            var milkman = new Milkman(TokenType.Bot, configuration["token"], prefixProvider, logger, new DiscordBotConfiguration()
+            {    
+                ProviderFactory = _ => provider,
+                Activity = new LocalActivity("https://youtu.sbe/-knOGoRYhE0", ActivityType.Watching),
+                CommandServiceConfiguration = new CommandServiceConfiguration()
+                {
+                    IgnoresExtraArguments = true,
+                },
+                Logger = new Optional<Disqord.Logging.ILogger>(new DisqordLogger(logger)),
+            });
+
+            await milkman.RunAsync();
         }
-
-
+        
         private IServiceProvider ConfigureServices()
             => new ServiceCollection()
                     .AddSingleton(new ConfigurationBuilder()
@@ -37,32 +55,7 @@ namespace The_Milkman
                                            logging.AddDebug();
                                        })
                     )
-                    .AddSingleton(x =>
-                    {
-                        var configuration = x.GetService<IConfigurationRoot>();
-                        var loggerFactory = x.GetService<ILoggerFactory>();
-                        var logger = loggerFactory.CreateLogger("The Milkman");
-                        var prefixProvider = new MilkmanPrefixProvider();
-                        return new Milkman(TokenType.Bot, configuration["token"], prefixProvider, logger, new DiscordBotConfiguration()
-                        {    
-                            ProviderFactory = _ => x,
-                            Activity = new LocalActivity("https://youtu.be/-knOGoRYhE0", ActivityType.Watching),
-                            CommandServiceConfiguration = new CommandServiceConfiguration()
-                            {
-                                IgnoresExtraArguments = true,
-                            },
-                            Logger = new Optional<Disqord.Logging.ILogger>(new DisqordLogger(logger)),
-                        });
-
-
-                    })
                     .AddSingleton<HttpClient>()
                     .BuildServiceProvider();
-
-
-
-        
-        
-        
     }
 }
