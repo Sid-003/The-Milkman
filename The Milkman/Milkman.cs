@@ -3,9 +3,12 @@ using Disqord.Bot;
 using Disqord.Bot.Prefixes;
 using Microsoft.Extensions.Logging;
 using Qmmands;
-using System;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
+using Disqord.Extensions.Interactivity;
+using Microsoft.Extensions.DependencyInjection;
+using Pahoe;
 
 namespace The_Milkman
 {
@@ -31,5 +34,17 @@ namespace The_Milkman
 
         protected override ValueTask<DiscordCommandContext> GetCommandContextAsync(CachedUserMessage message, IPrefix prefix)
             => new ValueTask<DiscordCommandContext>(new MilkmanCommandContext(message, this, prefix));
+
+        public override async Task RunAsync(CancellationToken cancellationToken = new CancellationToken())
+        {
+            var client = this.GetService<LavalinkClient>();
+            await AddExtensionAsync(new InteractivityExtension());
+            this.Ready += async e =>
+            {
+                await client.StartAsync();
+                _logger.Log(LogLevel.Information, "lavalink client initialized");
+            };
+            await base.RunAsync(cancellationToken);
+        }
     }
 }

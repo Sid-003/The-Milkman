@@ -8,8 +8,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Disqord" Version="1.0.0-nightly-00070" />
-      <PackageReference Include="Disqord.Bot" Version="1.0.0-nightly-00070" />
+      <PackageReference Include="Disqord" Version="1.0.0-nightly-00074" />
+      <PackageReference Include="Disqord.Bot" Version="1.0.0-nightly-00074" />
+      <PackageReference Include="Disqord.Extensions.Interactivity" Version="1.0.0-nightly-00074" />
       <PackageReference Include="Microsoft.CodeAnalysis.Scripting" Version="3.7.0-4.final" />
       <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0-preview.7.20364.11" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.0-preview.7.20364.11" />
@@ -22,6 +23,7 @@
 
     <ItemGroup>
       <Folder Include="Extensions\" />
+      <Folder Include="Results" />
       <Folder Include="Services\" />
     </ItemGroup>
 

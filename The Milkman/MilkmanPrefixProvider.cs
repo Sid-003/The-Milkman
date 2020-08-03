@@ -1,6 +1,5 @@
 ﻿using Disqord;
 using Disqord.Bot.Prefixes;
-using Disqord.Rest;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;

@@ -8,6 +8,7 @@ using Microsoft.CodeAnalysis.Scripting;
 using System.Linq;
 using System.Diagnostics;
 using Disqord;
+using Disqord.Bot;
 
 namespace The_Milkman.Modules
 {
@@ -16,15 +17,17 @@ namespace The_Milkman.Modules
         public Milkman Bot { get; set; }
         public MilkmanCommandContext Context { get; set;}
         public DiscordClientBase Client => Context.Message.Client;
+        
+        public async Task<IUserMessage> ReplyAsync(string message = null)
+            => await Context.Channel.SendMessageAsync(message);
     }
 
     [RequireOwner]
-    public class Owner : ModuleBase<MilkmanCommandContext>
+    public class Owner : DiscordModuleBase<MilkmanCommandContext>
     {
-
         private readonly ScriptOptions _options = ScriptOptions.Default
-                                                      .AddReferences(AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic && !string.IsNullOrWhiteSpace(x.Location)))
-                                                      .AddImports("System", "System.IO", "The_Milkman", "System.Linq");
+                                                               .AddReferences(AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic && !string.IsNullOrWhiteSpace(x.Location)))
+                                                               .AddImports("System", "System.IO", "The_Milkman", "System.Linq");
 
         [Command("eval")]
         public async Task EvalAsync([Remainder]string code) 
@@ -64,11 +67,11 @@ namespace The_Milkman.Modules
 
             var resultEmbed = new LocalEmbedBuilder()
             {
-                Title = "Evaluattion succesful",
+                Title = "Evaluation sucessful",
                 Color = Disqord.Color.GreenYellow,
                 Footer = new LocalEmbedFooterBuilder()
                 {
-                    Text = $"Compilation Time: {compileTimer.ElapsedMilliseconds} ms | Execution Time: {executionTimer.ElapsedMilliseconds}"
+                    Text = $"Compilation Time: {compileTimer.ElapsedMilliseconds} ms | Execution Time: {executionTimer.ElapsedMilliseconds} ms"
                 } 
             };
 

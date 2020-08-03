@@ -1,14 +1,10 @@
 ﻿using Qmmands;
 using System.Threading.Tasks;
-using Qommon.Events;
 using System.Diagnostics;
 using System.Linq;
 using System;
 using System.IO;
 using Disqord;
-using The_Milkman.Attributes.Preconditions;
-using Newtonsoft.Json.Schema;
-using System.Threading;
 
 namespace The_Milkman.Modules
 {

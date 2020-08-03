@@ -13,10 +13,10 @@ namespace The_Milkman.Logging
         public DisqordLogger(IMSLogger logger)
             => _logger = logger;
 
-
-        public event EventHandler<MessageLoggedEventArgs> MessageLogged;
-
-        public void Log(object sender, MessageLoggedEventArgs e)
+        public void Log(object sender, LogEventArgs e)
             => _logger.Log((LogLevel)(int)e.Severity, e.Exception, "[{source}] : {message}", e.Source, e.Message);
+
+        public event EventHandler<LogEventArgs> Logged;
+        public void Dispose() { }
     }
 }
