@@ -23,33 +23,8 @@ namespace The_Milkman
         private async Task StartAsync()
         {
             var provider = ConfigureServices();
-            var configuration = provider.GetService<IConfigurationRoot>();
-            
-            var loggerFactory = provider.GetService<ILoggerFactory>();
-            var logger = loggerFactory.CreateLogger("The Milkman");
-            
-            var prefixProvider = new MilkmanPrefixProvider();
 
-            var milkman = new Milkman
-            (
-                TokenType.Bot,
-                configuration["token"],
-                prefixProvider,
-                logger,
-                new DiscordBotConfiguration()
-                {
-                    MessageCache = null,
-                    ProviderFactory = _ => provider,
-                    Activity = new LocalActivity("https://youtu.be/-knOGoRYhE0", ActivityType.Watching),
-                    CommandServiceConfiguration = new CommandServiceConfiguration()
-                    {
-                        IgnoresExtraArguments = true,
-                    },
-                    Logger = new Optional<Disqord.Logging.ILogger>(new DisqordLogger(logger)),
-                }
-            );
-
-            await milkman.RunAsync();
+            await provider.GetService<Milkman>().RunAsync();
         }
         
         private IServiceProvider ConfigureServices()
@@ -66,6 +41,37 @@ namespace The_Milkman
                                            logging.AddDebug();
                                        })
                     )
+                    .AddSingleton(
+                        provider =>
+                        {
+                            //need this here for lavalink client
+                            var configuration = provider.GetService<IConfigurationRoot>();
+            
+                            var loggerFactory = provider.GetService<ILoggerFactory>();
+                            var logger = loggerFactory.CreateLogger("The Milkman");
+            
+                            var prefixProvider = new MilkmanPrefixProvider();
+
+                            var milkman = new Milkman
+                            (
+                                TokenType.Bot,
+                                configuration["token"],
+                                prefixProvider,
+                                logger,
+                                new DiscordBotConfiguration()
+                                {
+                                    MessageCache = null,
+                                    ProviderFactory = _ => provider,
+                                    Activity = new LocalActivity("https://youtu.be/-knOGoRYhE0", ActivityType.Watching),
+                                    CommandServiceConfiguration = new CommandServiceConfiguration()
+                                    {
+                                        IgnoresExtraArguments = true,
+                                    },
+                                    Logger = new Optional<Disqord.Logging.ILogger>(new DisqordLogger(logger)),
+                                }
+                            );
+                            return milkman;
+                        })
                     .AddSingleton(
                         provider =>
                         {

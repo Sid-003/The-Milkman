@@ -5,13 +5,14 @@ using System.Threading.Tasks;
 using Disqord;
 using Pahoe;
 using Pahoe.Search;
+using The_Milkman.Collections;
 using The_Milkman.Extensions;
 
 namespace The_Milkman.Services
 {
     public class AudioService
     {
-        private readonly ConcurrentDictionary<ulong, List<LavalinkTrack>> _queue = new ConcurrentDictionary<ulong, List<LavalinkTrack>>();
+        private readonly ConcurrentDictionary<ulong, MusicQueue> _queue = new ConcurrentDictionary<ulong, MusicQueue>();
 
         public LavalinkClient Client { get; }
 
@@ -28,7 +29,7 @@ namespace The_Milkman.Services
             if (Client.TryGetPlayer(guildId, out LavalinkPlayer player)) return player;
             
             player = await Client.ConnectAsync(vc);
-            _ = _queue.TryAdd(guildId, new List<LavalinkTrack>());
+            _ = _queue.TryAdd(guildId, new MusicQueue());
 
             player.TrackEnded += async args =>
             {
@@ -61,10 +62,15 @@ namespace The_Milkman.Services
         {
             _queue[guildId].TryPopAt(index, out _);
         }
+        
+        public void InsertTrack(ulong guildId, int index, LavalinkTrack track)
+        {
+            _queue[guildId].Insert(index, track);
+        }
 
         public string GetQueue(ulong guildId)
         {
-            return Markdown.CodeBlock(string.Join("\n", _queue[guildId].Select((x, i) => $"{i}. [{x.Title}]")));
+            return Markdown.CodeBlock(_queue[guildId].ToString());
         }
         
     }

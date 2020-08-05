@@ -9,16 +9,21 @@ using System.Threading.Tasks;
 using Disqord.Extensions.Interactivity;
 using Microsoft.Extensions.DependencyInjection;
 using Pahoe;
+using The_Milkman.Modules;
+using The_Milkman.Services;
+using The_Milkman.TypeParsers;
 
 namespace The_Milkman
 {
     public class Milkman : DiscordBot
     {
         private readonly ILogger _logger;
+        
 
         public Milkman(TokenType tokenType, string token, IPrefixProvider prefixProvider, ILogger logger, DiscordBotConfiguration configuration = null) : base(tokenType, token, prefixProvider, configuration)
         {
             _logger = logger;
+            AddTypeParser(new LavalinkTrackParser());
             AddModules(Assembly.GetExecutingAssembly());
             this.CommandExecutionFailed += OnFailed;
         }
@@ -43,6 +48,16 @@ namespace The_Milkman
             {
                 await client.StartAsync();
                 _logger.Log(LogLevel.Information, "lavalink client initialized");
+            };
+            this.VoiceStateUpdated += async e =>
+            {
+                var user = e.Member;
+                var ownerId = (await e.Client.GetCurrentApplicationAsync()).Owner.Id;
+                if (user.Id != ownerId || user.Guild.CurrentMember.VoiceChannel is null)
+                    return;
+                
+                if (e.Member.VoiceChannel?.Id != e.OldVoiceState.ChannelId)
+                    await e.Client.UpdateVoiceStateAsync(user.Guild.Id, e.NewVoiceState.ChannelId, false, true);
             };
             await base.RunAsync(cancellationToken);
         }
