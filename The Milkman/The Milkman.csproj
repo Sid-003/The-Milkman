@@ -5,12 +5,16 @@
         <TargetFramework>netcoreapp3.1</TargetFramework>
         <RootNamespace>The_Milkman</RootNamespace>
         <LangVersion>8.0</LangVersion>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
       <PackageReference Include="Disqord" Version="1.0.0-nightly-00074" />
       <PackageReference Include="Disqord.Bot" Version="1.0.0-nightly-00074" />
       <PackageReference Include="Disqord.Extensions.Interactivity" Version="1.0.0-nightly-00074" />
+      <PackageReference Include="Iced" Version="1.8.0" />
+      <PackageReference Include="ICSharpCode.Decompiler" Version="6.1.0.5902" />
       <PackageReference Include="Microsoft.CodeAnalysis.Scripting" Version="3.7.0-4.final" />
       <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0-preview.7.20364.11" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.0-preview.7.20364.11" />

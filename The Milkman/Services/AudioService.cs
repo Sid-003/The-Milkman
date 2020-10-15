@@ -1,4 +1,6 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -23,7 +25,6 @@ namespace The_Milkman.Services
             Client = client;
         }
         
-
         public async Task<LavalinkPlayer> GetOrConnectAsync(ulong guildId, CachedVoiceChannel vc)
         {
             if (Client.TryGetPlayer(guildId, out LavalinkPlayer player)) return player;
@@ -55,8 +56,7 @@ namespace The_Milkman.Services
             await player.PlayAsync(track);
         }
 
-        public bool ContainsTrack(ulong guilldId, LavalinkTrack track)
-            =>  _queue.TryGetValue(guilldId, out var tracks) && tracks.Contains(track);
+        public bool Contains(ulong guildId, LavalinkTrack track) => _queue[guildId].Contains(track);
 
         public void PopQueue(ulong guildId, int index)
         {
@@ -68,9 +68,10 @@ namespace The_Milkman.Services
             _queue[guildId].Insert(index, track);
         }
 
-        public string GetQueue(ulong guildId)
+        public (int, string) GetQueue(ulong guildId)
         {
-            return Markdown.CodeBlock(_queue[guildId].ToString());
+            var q = _queue[guildId];
+            return (q.GetTotalLength(), _queue[guildId].ToString());
         }
         
     }

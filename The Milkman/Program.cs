@@ -66,6 +66,7 @@ namespace The_Milkman
                                     CommandServiceConfiguration = new CommandServiceConfiguration()
                                     {
                                         IgnoresExtraArguments = true,
+                                        DefaultRunMode = RunMode.Parallel
                                     },
                                     Logger = new Optional<Disqord.Logging.ILogger>(new DisqordLogger(logger)),
                                 }

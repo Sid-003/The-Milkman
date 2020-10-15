@@ -1,5 +1,6 @@
 ﻿using Qmmands;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using The_Milkman.Attributes.Preconditions;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
@@ -9,6 +10,7 @@ using System.Linq;
 using System.Diagnostics;
 using Disqord;
 using Disqord.Bot;
+using The_Milkman.Extensions;
 
 namespace The_Milkman.Modules
 {
@@ -25,17 +27,37 @@ namespace The_Milkman.Modules
     [RequireOwner]
     public class Owner : DiscordModuleBase<MilkmanCommandContext>
     {
+        private static readonly IEnumerable<string> IMPORTS = new[]
+        {
+            "System",
+            "System.Collections",
+            "System.Reflection",
+            "System.Threading.Tasks",
+            "System.Linq",
+            "System.IO",
+
+            "The_Milkman",
+            "The_Milkman.Services",
+
+            "Disqord",
+            "Disqord.Bot",
+
+            "Qmmands",
+            
+            "Microsoft.Extensions.DependencyInjection",
+        
+            "Newtonsoft.Json"
+        };
+        
         private readonly ScriptOptions _options = ScriptOptions.Default
                                                                .AddReferences(AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic && !string.IsNullOrWhiteSpace(x.Location)))
-                                                               .AddImports("System", "System.IO", "The_Milkman", "System.Linq");
+                                                               .AddImports(IMPORTS);
+
 
         [Command("eval")]
         public async Task EvalAsync([Remainder]string code) 
         {
-            int nlIndex = code.IndexOf('\n') + 1;
-            int length = code.Length - 4 - nlIndex;
-            code = code.Substring(nlIndex, length);
-
+            code = SanityUtilities.ExtractCode(code);
             var script = CSharpScript.Create(code, _options, typeof(Globals));
             var compileTimer = Stopwatch.StartNew();
             var diagnostics = script.Compile();

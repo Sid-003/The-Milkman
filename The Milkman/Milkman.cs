@@ -26,6 +26,18 @@ namespace The_Milkman
             AddTypeParser(new LavalinkTrackParser());
             AddModules(Assembly.GetExecutingAssembly());
             this.CommandExecutionFailed += OnFailed;
+            this.CommandExecuted += OnCommandExecuted; 
+            
+        }
+
+        private Task OnCommandExecuted(CommandExecutedEventArgs e)
+        {
+            switch (e.Result)
+            {
+                
+            }
+
+            return Task.CompletedTask;
         }
 
         private Task OnFailed(CommandExecutionFailedEventArgs e)
@@ -39,6 +51,19 @@ namespace The_Milkman
 
         protected override ValueTask<DiscordCommandContext> GetCommandContextAsync(CachedUserMessage message, IPrefix prefix)
             => new ValueTask<DiscordCommandContext>(new MilkmanCommandContext(message, this, prefix));
+
+        protected override async ValueTask AfterExecutedAsync(IResult result, DiscordCommandContext context)
+        {
+            if (result is FailedResult failure)
+            {
+                switch (failure)
+                {
+                    case TypeParseFailedResult typeParseFailedResult:
+                        await context.Channel.SendMessageAsync("argument failed to parse because: " + typeParseFailedResult.Reason);
+                        break;
+                }
+            }
+        }
 
         public override async Task RunAsync(CancellationToken cancellationToken = new CancellationToken())
         {

@@ -11,7 +11,8 @@ namespace The_Milkman
         public ValueTask<IEnumerable<IPrefix>> GetPrefixesAsync(CachedUserMessage message)
             => new ValueTask<IEnumerable<IPrefix>>(new[]
               {
-                new StringPrefix("mm!", StringComparison.InvariantCultureIgnoreCase)
+                new StringPrefix("mm!", StringComparison.InvariantCultureIgnoreCase),
+                new StringPrefix("<:GWatproFeelsMilkMan:400766361091178511>", StringComparison.InvariantCulture), 
               });
     }
 }

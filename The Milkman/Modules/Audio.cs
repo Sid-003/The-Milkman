@@ -3,14 +3,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using Disqord;
 using Disqord.Bot;
-using Disqord.Events;
-using Disqord.Extensions.Interactivity;
-using Microsoft.Extensions.DependencyInjection;
 using Pahoe;
 using Qmmands;
 using Pahoe.Search;
 using The_Milkman.Attributes.Preconditions;
 using The_Milkman.Services;
+using The_Milkman.TypeParsers;
 
 
 namespace The_Milkman.Modules
@@ -26,7 +24,32 @@ namespace The_Milkman.Modules
 
         
         //need to change this to use CommandResult shit instead of ReplyAsync everywhere
-        
+
+        [Command("play")]
+        public async Task PlayAsync()
+        {
+            var parser = Context.Bot.GetSpecificTypeParser<LavalinkTrack, LavalinkTrackParser>();
+            
+            var attachments = Context.Message.Attachments;
+            if (attachments.Count == 0)
+            {
+                await ReplyAsync("no atttachments");
+                return;
+            }
+
+
+            var result = await parser.ParseAsync(null, attachments.First().Url, Context);
+
+            if (!result.HasValue)
+            {
+                await ReplyAsync("invalid track lamo");
+                return;
+            }
+
+            await PlayAsync(result.Value);
+        }
+
+
         [Command("play")]
         public async Task PlayAsync([Remainder]LavalinkTrack track)
         {
@@ -39,7 +62,7 @@ namespace The_Milkman.Modules
 
             ulong guildId = Context.Guild.Id;
 
-            if (_audio.ContainsTrack(guildId, track))
+            if  (_audio.Contains(guildId, track) || track.Equals(player.Track))
             {
                 await ReplyAsync("already has the track");
                 return;
@@ -57,15 +80,23 @@ namespace The_Milkman.Modules
             var ownerId = (await Context.Bot.GetCurrentApplicationAsync()).Owner.Id;
             if (Context.User.Id != ownerId)
             {
-                var reaction =  await Context.Channel.WaitForReactionAsync(e =>
-                {
-                    if (e.Message.Id != Context.Message.Id || !e.Reaction.HasValue || !e.Emoji.Equals(new LocalEmoji("✅")))
-                        return false;
-                    
-                    return e.Reaction.Value.Count >= (player.Channel.Members.Count /  2);
-                }, TimeSpan.FromSeconds(15));
-                
-                if (reaction is null)
+                var msg = Context.Message;
+                var yes = new LocalEmoji("✅");
+                var no = new LocalEmoji("❌");
+                var god = new LocalEmoji("🙂");
+                await msg.AddReactionAsync(yes);
+                await msg.AddReactionAsync(no);
+                await msg.AddReactionAsync(god);
+
+                await Task.Delay(TimeSpan.FromSeconds(5));
+
+                var updatedMsg = await Context.Channel.GetMessageAsync(msg.Id);
+
+                int yesCount = (await updatedMsg.GetReactionsAsync(yes)).Select(x => Context.Guild.GetMember(x.Id)).Count(x => x?.VoiceChannel == player.Channel);
+                int noCount = (await updatedMsg.GetReactionsAsync(no)).Select(x => Context.Guild.GetMember(x.Id)).Count(x => x?.VoiceChannel == player.Channel);
+
+          
+                if (noCount >= yesCount || (await updatedMsg.GetReactionsAsync(god)).Any(x => x.Id == ownerId))
                 {
                     await ReplyAsync("not skipping idiot");
                     return;
@@ -78,26 +109,56 @@ namespace The_Milkman.Modules
         }
 
         [Command("queue", "q")]
-        public async Task QueueAsync()
+        public async Task Queue()
         {
-            await ReplyAsync(_audio.GetQueue(Context.Guild.Id));
+            (int l, string q) = _audio.GetQueue(Context.Guild.Id);
+            var embed = new LocalEmbedBuilder()
+                        .WithTitle("Queue")
+                        .WithDescription(q is ""? "empty" : q)
+                        .WithColor(new Color(236, 192, 255))
+                        .WithFooter($"Total Length: {(l / 60):00}:{(l % 60):00}")
+                        .Build();
+
+            await ReplyAsync(embed: embed);
         }
 
-        [Command("nowplaying", "np")]
+        [Command("nowplaying", "np", "currenttrack", "ct")]
         public async Task ShowCurrentTrackAsync()
         {
             var player = await _audio.GetOrConnectAsync(Context.Guild.Id, Context.Member.VoiceChannel);
 
             LavalinkTrack track = player.Track;
-            
-            if(player.State == PlayerState.Playing)
-                await ReplyAsync($"[{track.Title}] ({player.Position} / {track.Length})");
+
+            if (player.State == PlayerState.Playing)
+            {
+                var embed = new LocalEmbedBuilder()
+                    .WithTitle("Current Track")
+                    .WithDescription($"[{track.Title}]({track.Uri})")
+                    .WithColor(new Color(236, 192, 255))
+                    .AddField("Volume", player.Volume, true)
+                    .AddField("Position", $"{player.Position:mm\\:ss} / {track.Length:mm\\:ss}", true)
+                    .Build();
+
+                await ReplyAsync(embed: embed);
+            }
             else
             {
                 await ReplyAsync("nothing playing");
             }
         }
 
+
+        [Command("volume")]
+        public async Task VolumeAsync(ushort vol)
+        {
+            vol = Math.Clamp(vol, (ushort)0, (ushort)100);
+
+            var player = await _audio.GetOrConnectAsync(Context.Guild.Id, Context.Member.VoiceChannel);
+
+            await player.SetVolumeAsync(vol);
+        }
+        
+        
         [Command("pop")]
         [RequireOwner]
         public void Pop(int index)
@@ -112,7 +173,7 @@ namespace The_Milkman.Modules
             _audio.InsertTrack(Context.Guild.Id, index, track);
         }
 
-        [Command("pause")]
+        [Command("pause", "unpause", "resume")]
         public async Task PauseAsync()
         {
             var player = await _audio.GetOrConnectAsync(Context.Guild.Id, Context.Member.VoiceChannel);

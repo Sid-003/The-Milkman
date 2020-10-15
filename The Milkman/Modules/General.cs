@@ -58,6 +58,10 @@ namespace The_Milkman.Modules
         [Command("stickbug")]
         public async Task StickbugAsync(string outputname = "output")
            => await MergeVideo("video", outputname);
+           
+        [Command("hwurmp")]
+        public async Task HrumpwAsync(string outputname = "output")
+            => await MergeVideo("hrump", outputname);
 
 
         [Command("souptime")]
@@ -67,6 +71,8 @@ namespace The_Milkman.Modules
 
         private async Task MergeVideo(string video, string outputname)
         {
+
+           
             var url = Context.Message.Attachments.FirstOrDefault()?.Url;
             
             if (url is null)

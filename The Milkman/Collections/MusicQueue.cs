@@ -50,11 +50,19 @@ namespace The_Milkman.Collections
             }
         }
 
+        public int GetTotalLength()
+        {
+            lock (_internalList)
+            {
+                return _internalList.Sum(x => (int)x.Length.TotalSeconds);
+            }
+        }
+
         public override string ToString()
         {
             lock (_internalList)
             {
-                return  string.Join("\n", _internalList.Select((x, i) => $"{i}. [{x.Title}]"));
+                return  string.Join("\n", _internalList.Select((x, i) => $"{i}. [{x.Title}]({x.Uri})"));
             }
         }
 
