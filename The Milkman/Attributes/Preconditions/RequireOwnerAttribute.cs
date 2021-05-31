@@ -1,6 +1,7 @@
 ﻿using Qmmands;
 using System;
 using System.Threading.Tasks;
+using Disqord.Rest;
 
 namespace The_Milkman.Attributes.Preconditions
 {
@@ -9,14 +10,11 @@ namespace The_Milkman.Attributes.Preconditions
     {
         public override async ValueTask<CheckResult> CheckAsync(CommandContext context)
         {
-            if (!(context is MilkmanCommandContext Context))
+            if (context is not MilkmanCommandContext Context)
                 throw new ArgumentException("Invalid context.", nameof(context));
 
-            var application = await Context.Message.Client.GetCurrentApplicationAsync();
-            if (application.Owner.Id == Context.User.Id)
-                return CheckResult.Successful;
-
-            return new CheckResult("You have to be the owner of this bot to run this command.");
+            var application = await Context.Bot.FetchCurrentApplicationAsync();
+            return application.Owner.Id == Context.Author.Id ? CheckResult.Successful : new CheckResult("You have to be the owner of this bot to run this command.");
         }
     }
 }

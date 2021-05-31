@@ -1,18 +1,19 @@
-﻿using Disqord;
-using Disqord.Bot;
-using Disqord.Bot.Prefixes;
+﻿using System;
+using Disqord;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http;
+using Disqord.Bot;
+using Disqord.Gateway;
 
 namespace The_Milkman
 {
-    public class MilkmanCommandContext : DiscordCommandContext
-    {        
+    public class MilkmanCommandContext : DiscordGuildCommandContext
+    {
         public new Milkman Bot { get; }
 
         public HttpClient HttpClient { get; }
 
-        public MilkmanCommandContext(CachedUserMessage message, Milkman bot, IPrefix prefix) : base(bot, prefix, message, bot)
-            => (Bot, HttpClient) = (bot, bot.GetRequiredService<HttpClient>());
+        public MilkmanCommandContext(IGatewayUserMessage message, string input, Milkman bot, IPrefix prefix) : base(bot, prefix, input, message, message.GetChannel(), bot.Services)
+            => (Bot, HttpClient) = (bot, bot.Services.GetRequiredService<HttpClient>());
     }
 }

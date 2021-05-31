@@ -10,6 +10,9 @@ using System.Linq;
 using System.Diagnostics;
 using Disqord;
 using Disqord.Bot;
+using Disqord.Gateway;
+using Disqord.Rest;
+using Microsoft.Diagnostics.Tracing.Parsers.AspNet;
 using The_Milkman.Extensions;
 
 namespace The_Milkman.Modules
@@ -17,11 +20,11 @@ namespace The_Milkman.Modules
     public class Globals
     {
         public Milkman Bot { get; set; }
-        public MilkmanCommandContext Context { get; set;}
-        public DiscordClientBase Client => Context.Message.Client;
-        
+        public MilkmanCommandContext Context { get; set; }
+        public DiscordClientBase Client => Context.Bot;
+
         public async Task<IUserMessage> ReplyAsync(string message = null)
-            => await Context.Channel.SendMessageAsync(message);
+            => await Context.Channel.SendMessageAsync(new LocalMessageBuilder().WithContent(message).Build());
     }
 
     [RequireOwner]
@@ -43,19 +46,19 @@ namespace The_Milkman.Modules
             "Disqord.Bot",
 
             "Qmmands",
-            
+
             "Microsoft.Extensions.DependencyInjection",
-        
+
             "Newtonsoft.Json"
         };
-        
+
         private readonly ScriptOptions _options = ScriptOptions.Default
-                                                               .AddReferences(AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic && !string.IsNullOrWhiteSpace(x.Location)))
-                                                               .AddImports(IMPORTS);
+            .AddReferences(AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic && !string.IsNullOrWhiteSpace(x.Location)))
+            .AddImports(IMPORTS);
 
 
         [Command("eval")]
-        public async Task EvalAsync([Remainder]string code) 
+        public async Task<DiscordResponseCommandResult> EvalAsync([Remainder] string code)
         {
             code = SanityUtilities.ExtractCode(code);
             var script = CSharpScript.Create(code, _options, typeof(Globals));
@@ -64,7 +67,7 @@ namespace The_Milkman.Modules
             compileTimer.Stop();
             var errors = diagnostics.Where(x => x.Severity == DiagnosticSeverity.Error).Select(x => $"Error {x.Id} at {x.Location.GetLineSpan()}\nMessage: {x.GetMessage()}").ToArray();
 
-            if (errors.Length != 0) 
+            if (errors.Length != 0)
             {
                 var embed = new LocalEmbedBuilder()
                 {
@@ -73,8 +76,7 @@ namespace The_Milkman.Modules
                     Color = Disqord.Color.Red
                 };
 
-                await Context.Channel.SendMessageAsync(embed: embed.Build());
-                return;
+                return Reply(embed);
             }
 
             compileTimer.Stop();
@@ -94,7 +96,7 @@ namespace The_Milkman.Modules
                 Footer = new LocalEmbedFooterBuilder()
                 {
                     Text = $"Compilation Time: {compileTimer.ElapsedMilliseconds} ms | Execution Time: {executionTimer.ElapsedMilliseconds} ms"
-                } 
+                }
             };
 
             var value = result.ReturnValue;
@@ -102,7 +104,18 @@ namespace The_Milkman.Modules
                 resultEmbed.Description = "null";
             else
                 resultEmbed.AddField(value.GetType().ToString(), value);
-            await Context.Channel.SendMessageAsync(embed: resultEmbed.Build());
+
+            return Reply(resultEmbed);
+        }
+
+        [Command("purge")]
+        public async Task PurgeAsync(int amount)
+        {
+            var channel = Context.Channel;
+
+            var messages = await channel.FetchMessagesAsync(amount);
+
+            await Context.Channel.DeleteMessagesAsync(messages.Select(x => x.Id));
         }
     }
 }

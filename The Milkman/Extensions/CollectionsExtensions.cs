@@ -4,6 +4,5 @@ namespace The_Milkman.Extensions
 {
     public static class CollectionsExtensions
     {
-        
     }
 }

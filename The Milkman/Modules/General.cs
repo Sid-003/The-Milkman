@@ -5,18 +5,19 @@ using System.Linq;
 using System;
 using System.IO;
 using Disqord;
+using Disqord.Bot;
 
 namespace The_Milkman.Modules
 {
-    public class General : ModuleBase<MilkmanCommandContext>
+    public class General : DiscordModuleBase<MilkmanCommandContext>
     {
         [Command("ping")]
-        public async Task PingAsync()
+        public DiscordCommandResult Ping()
         {
-            await Context.Channel.SendMessageAsync("pong your mother");
+            return Reply("pong your mother");
         }
 
-        private Task<bool> StartProcessAsync(string name, string args)
+        private static Task<bool> StartProcessAsync(string name, string args)
         {
             var tcs = new TaskCompletionSource<bool>();
 
@@ -56,25 +57,23 @@ namespace The_Milkman.Modules
 
 
         [Command("stickbug")]
-        public async Task StickbugAsync(string outputname = "output")
-           => await MergeVideo("video", outputname);
-           
+        public async Task<DiscordResponseCommandResult> StickbugAsync(string outputname = "output")
+            => await MergeVideo("video", outputname);
+
         [Command("hwurmp")]
-        public async Task HrumpwAsync(string outputname = "output")
+        public async Task<DiscordResponseCommandResult> HrumpwAsync(string outputname = "output")
             => await MergeVideo("hrump", outputname);
 
 
         [Command("souptime")]
-        public async Task SouptimeAsync(string outputname = "output")
+        public async Task<DiscordResponseCommandResult> SouptimeAsync(string outputname = "output")
             => await MergeVideo("lizard", outputname);
 
 
-        private async Task MergeVideo(string video, string outputname)
+        private async Task<DiscordResponseCommandResult> MergeVideo(string video, string outputname)
         {
-
-           
             var url = Context.Message.Attachments.FirstOrDefault()?.Url;
-            
+
             if (url is null)
                 throw new Exception("lmao idiot what are you doing");
 
@@ -116,7 +115,9 @@ namespace The_Milkman.Modules
 
             var fs = new MemoryStream(await File.ReadAllBytesAsync("output.mp4"));
 
-            await Context.Channel.SendMessageAsync(new LocalAttachment(fs, outputname + ".mp4"));
+            return Response(new LocalMessageBuilder()
+                .WithAttachments(new LocalAttachment(fs, outputname + ".mp4"))
+                .Build());
         }
     }
 }
